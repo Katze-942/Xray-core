@@ -12,6 +12,7 @@ import (
 type UDPResolver struct {
 	dest   net.Destination
 	dialer *finalmask.Dialer
+	edns0  *int32
 
 	conn    net.PacketConn
 	udpAddr *net.UDPAddr
@@ -23,6 +24,9 @@ type UDPResolver struct {
 }
 
 func NewUDPResolver(config *UDPResolverProto, dialer *finalmask.Dialer) (Resolver, error) {
+	if err := validateResolverEDNS0(config.Edns0); err != nil {
+		return nil, err
+	}
 	dest, err := net.ParseDestination("udp:" + config.Addr)
 	if err != nil {
 		return nil, err
@@ -30,6 +34,7 @@ func NewUDPResolver(config *UDPResolverProto, dialer *finalmask.Dialer) (Resolve
 	r := &UDPResolver{
 		dest:    dest,
 		dialer:  dialer,
+		edns0:   config.Edns0,
 		readCh:  make(chan []byte),
 		closeCh: make(chan struct{}),
 	}
@@ -38,6 +43,10 @@ func NewUDPResolver(config *UDPResolverProto, dialer *finalmask.Dialer) (Resolve
 		return nil, err
 	}
 	return r, nil
+}
+
+func (r *UDPResolver) EDNS0() *int32 {
+	return r.edns0
 }
 
 func (r *UDPResolver) closed() bool {

@@ -24,8 +24,10 @@ message Config {
 
 message TCPResolverProto {
   string addr = 1;
+  optional int32 edns0 = 2;
 }
 
 message UDPResolverProto {
   string addr = 1;
+  optional int32 edns0 = 2;
 }

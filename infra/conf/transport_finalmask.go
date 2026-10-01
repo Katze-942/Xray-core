@@ -800,19 +800,21 @@ type XDNSDomain struct {
 }
 
 type XDNSResolverTCP struct {
-	Addr string `json:"addr"`
+	Addr  string `json:"addr"`
+	Edns0 *int32 `json:"edns0"`
 }
 
 func (c *XDNSResolverTCP) Build() (proto.Message, error) {
-	return &xdns.TCPResolverProto{Addr: c.Addr}, nil
+	return &xdns.TCPResolverProto{Addr: c.Addr, Edns0: c.Edns0}, nil
 }
 
 type XDNSResolverUDP struct {
-	Addr string `json:"addr"`
+	Addr  string `json:"addr"`
+	Edns0 *int32 `json:"edns0"`
 }
 
 func (c *XDNSResolverUDP) Build() (proto.Message, error) {
-	return &xdns.UDPResolverProto{Addr: c.Addr}, nil
+	return &xdns.UDPResolverProto{Addr: c.Addr, Edns0: c.Edns0}, nil
 }
 
 var xdnsLoader = NewJSONConfigLoader(ConfigCreatorCache{

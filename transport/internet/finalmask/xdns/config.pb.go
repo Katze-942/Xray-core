@@ -161,6 +161,7 @@ func (x *Config) GetExtraPoll() int32 {
 type TCPResolverProto struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	Edns0         *int32                 `protobuf:"varint,2,opt,name=edns0,proto3,oneof" json:"edns0,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -202,9 +203,17 @@ func (x *TCPResolverProto) GetAddr() string {
 	return ""
 }
 
+func (x *TCPResolverProto) GetEdns0() int32 {
+	if x != nil && x.Edns0 != nil {
+		return *x.Edns0
+	}
+	return 0
+}
+
 type UDPResolverProto struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	Edns0         *int32                 `protobuf:"varint,2,opt,name=edns0,proto3,oneof" json:"edns0,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -246,6 +255,13 @@ func (x *UDPResolverProto) GetAddr() string {
 	return ""
 }
 
+func (x *UDPResolverProto) GetEdns0() int32 {
+	if x != nil && x.Edns0 != nil {
+		return *x.Edns0
+	}
+	return 0
+}
+
 var File_transport_internet_finalmask_xdns_config_proto protoreflect.FileDescriptor
 
 const file_transport_internet_finalmask_xdns_config_proto_rawDesc = "" +
@@ -262,11 +278,15 @@ const file_transport_internet_finalmask_xdns_config_proto_rawDesc = "" +
 	"\adomains\x18\x01 \x03(\v23.xray.transport.internet.finalmask.xdns.DomainProtoR\adomains\x12>\n" +
 	"\tresolvers\x18\x02 \x03(\v2 .xray.common.serial.TypedMessageR\tresolvers\x12\x1d\n" +
 	"\n" +
-	"extra_poll\x18\x03 \x01(\x05R\textraPoll\"&\n" +
+	"extra_poll\x18\x03 \x01(\x05R\textraPoll\"K\n" +
 	"\x10TCPResolverProto\x12\x12\n" +
-	"\x04addr\x18\x01 \x01(\tR\x04addr\"&\n" +
+	"\x04addr\x18\x01 \x01(\tR\x04addr\x12\x19\n" +
+	"\x05edns0\x18\x02 \x01(\x05H\x00R\x05edns0\x88\x01\x01B\b\n" +
+	"\x06_edns0\"K\n" +
 	"\x10UDPResolverProto\x12\x12\n" +
-	"\x04addr\x18\x01 \x01(\tR\x04addrB\x94\x01\n" +
+	"\x04addr\x18\x01 \x01(\tR\x04addr\x12\x19\n" +
+	"\x05edns0\x18\x02 \x01(\x05H\x00R\x05edns0\x88\x01\x01B\b\n" +
+	"\x06_edns0B\x94\x01\n" +
 	"*com.xray.transport.internet.finalmask.xdnsP\x01Z;github.com/xtls/xray-core/transport/internet/finalmask/xdns\xaa\x02&Xray.Transport.Internet.Finalmask.Xdnsb\x06proto3"
 
 var (
@@ -304,6 +324,8 @@ func file_transport_internet_finalmask_xdns_config_proto_init() {
 	if File_transport_internet_finalmask_xdns_config_proto != nil {
 		return
 	}
+	file_transport_internet_finalmask_xdns_config_proto_msgTypes[2].OneofWrappers = []any{}
+	file_transport_internet_finalmask_xdns_config_proto_msgTypes[3].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

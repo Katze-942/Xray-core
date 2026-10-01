@@ -225,6 +225,11 @@ func (c *xdnsClient) send() {
 	var data [255]byte
 
 	sendMsg := func(p []byte, domain *Domain, qtype uint16) {
+		index := c.resolverIndex.Load()
+		edns0 := domain.edns0
+		if override := c.resolvers[index].EDNS0(); override != nil {
+			edns0 = uint16(*override)
+		}
 		msg := dnsmessage.Message{
 			Header: dnsmessage.Header{
 				RecursionDesired: true,
@@ -237,13 +242,13 @@ func (c *xdnsClient) send() {
 				},
 			},
 		}
-		if domain.edns0 > 0 {
+		if edns0 > 0 {
 			msg.Additionals = []dnsmessage.Resource{
 				{
 					Header: dnsmessage.ResourceHeader{
 						Name:  dnsmessage.MustNewName("."),
 						Type:  dnsmessage.TypeOPT,
-						Class: dnsmessage.Class(domain.edns0),
+						Class: dnsmessage.Class(edns0),
 						TTL:   0,
 					},
 					Body: &dnsmessage.OPTResource{},
@@ -253,7 +258,6 @@ func (c *xdnsClient) send() {
 		pack := common.Must2(msg.AppendPack(buf[:0]))
 		common.Must2(rand.Read(pack[:2]))
 
-		index := c.resolverIndex.Load()
 		cur := c.resolverSends[index].Add(1)
 		i := index
 		for {

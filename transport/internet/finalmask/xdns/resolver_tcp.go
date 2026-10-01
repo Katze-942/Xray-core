@@ -13,6 +13,7 @@ import (
 type TCPResolver struct {
 	dest   net.Destination
 	dialer *finalmask.Dialer
+	edns0  *int32
 
 	conn    net.Conn
 	tcpAddr *net.TCPAddr
@@ -25,6 +26,9 @@ type TCPResolver struct {
 }
 
 func NewTCPResolver(config *TCPResolverProto, dialer *finalmask.Dialer) (Resolver, error) {
+	if err := validateResolverEDNS0(config.Edns0); err != nil {
+		return nil, err
+	}
 	dest, err := net.ParseDestination("tcp:" + config.Addr)
 	if err != nil {
 		return nil, err
@@ -32,6 +36,7 @@ func NewTCPResolver(config *TCPResolverProto, dialer *finalmask.Dialer) (Resolve
 	r := &TCPResolver{
 		dest:    dest,
 		dialer:  dialer,
+		edns0:   config.Edns0,
 		readCh:  make(chan []byte),
 		closeCh: make(chan struct{}),
 	}
@@ -40,6 +45,10 @@ func NewTCPResolver(config *TCPResolverProto, dialer *finalmask.Dialer) (Resolve
 		return nil, err
 	}
 	return r, nil
+}
+
+func (r *TCPResolver) EDNS0() *int32 {
+	return r.edns0
 }
 
 func (r *TCPResolver) closed() bool {
@@ -124,7 +133,7 @@ func (r *TCPResolver) Send(p []byte) {
 	if r.dial() != nil {
 		return
 	}
-	_ = binary.Write(r.conn, binary.BigEndian, len(p))
+	_ = binary.Write(r.conn, binary.BigEndian, uint16(len(p)))
 	_, _ = r.conn.Write(p)
 }
 
