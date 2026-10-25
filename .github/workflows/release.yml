@@ -5,15 +5,19 @@ on:
   release:
     types: [published]
   push:
-    branches-ignore: [my-fork]
-    tags: ['**']
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
+  my-fork-release:
+    if: github.ref == 'refs/heads/my-fork'
+    permissions:
+      contents: write
+    uses: ./.github/workflows/my-fork-release.yml
+
   check-assets:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+    if: github.ref != 'refs/heads/my-fork' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
     steps:
       - name: Restore Geodat Cache
         uses: actions/cache/restore@v6
@@ -164,7 +168,7 @@ jobs:
       fail-fast: false
 
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name
+    if: github.ref != 'refs/heads/my-fork' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.event.pull_request.base.repo.full_name)
     env:
       GOOS: ${{ matrix.goos }}
       GOARCH: ${{ matrix.goarch }}

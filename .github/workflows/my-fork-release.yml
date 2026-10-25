@@ -1,8 +1,7 @@
 name: my-fork Linux amd64 release
 
 on:
-  push:
-    branches: [my-fork]
+  workflow_call:
   workflow_dispatch:
 
 permissions:
