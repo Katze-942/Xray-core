@@ -5,6 +5,8 @@ on:
   release:
     types: [published]
   push:
+    branches-ignore: [my-fork]
+    tags: ['**']
   pull_request:
     types: [opened, synchronize, reopened]
 

@@ -1,0 +1,81 @@
+name: my-fork Linux amd64 release
+
+on:
+  push:
+    branches: [my-fork]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    if: github.ref == 'refs/heads/my-fork'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      GOOS: linux
+      GOARCH: amd64
+      GOAMD64: v1
+      CGO_ENABLED: 0
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Verify dependencies
+        run: |
+          go mod download
+          go mod verify
+
+      - name: Build Linux amd64
+        run: |
+          mkdir -p build_assets
+          go build -mod=readonly -trimpath -buildvcs=false -gcflags="all=-l=4" \
+            -ldflags="-X github.com/xtls/xray-core/core.build=my-fork-${GITHUB_SHA:0:12} -s -w -buildid=" \
+            -o build_assets/xray ./main
+          ./build_assets/xray version
+
+      - name: Package release
+        run: |
+          cp README.md LICENSE build_assets/
+          cp third_party/reality/LICENSE build_assets/LICENSE-REALITY
+          cp third_party/reality/LICENSE-Go build_assets/LICENSE-Go
+          base=https://raw.githubusercontent.com/XTLS/Xray-rules-dat/release
+          for entry in geoip/geoip-lite:geoip geosite/geosite:geosite; do
+            source=${entry%:*}
+            name=${entry#*:}
+            curl --fail --location --retry 3 "$base/$source.dat" -o "build_assets/$name.dat"
+            checksum=$(curl --fail --location --retry 3 "$base/$source.dat.sha256sum")
+            printf '%s  %s\n' "${checksum%% *}" "build_assets/$name.dat" | sha256sum --check --strict
+          done
+          printf '%s\n' "$GITHUB_SHA" > build_assets/SOURCE_COMMIT
+          (cd build_assets && zip -9 ../Xray-linux-64.zip ./*)
+          sha256sum Xray-linux-64.zip > Xray-linux-64.zip.sha256
+
+      - name: Publish GitHub pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          tag="my-fork-${GITHUB_RUN_NUMBER}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:12}"
+          cat > release-notes.md <<EOF
+          Linux amd64 build of the my-fork branch.
+
+          Source commit: ${GITHUB_SHA}
+          Base release: v26.10.21
+
+          REALITY accepts clients with a classical X25519 key share as well as
+          clients offering X25519MLKEM768. Hybrid key exchange support is retained.
+
+          Build: ${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}
+          EOF
+          gh release create "$tag" Xray-linux-64.zip Xray-linux-64.zip.sha256 \
+            --target "$GITHUB_SHA" --title "my-fork ${GITHUB_SHA:0:12} (Linux amd64)" \
+            --notes-file release-notes.md --prerelease --latest=false
